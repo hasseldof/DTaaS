@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "src/*": ["./src/*"]
+    },
+    "declaration": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "forceConsistentCasingInFileNames": false,
+    "incremental": true,
+    "lib": [
+      "ES2022"
+    ],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "outDir": "dist",
+    "removeComments": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "ES2022",
+    "types": ["node", "jest"],
+    "typeRoots": [
+      "node_modules/@types"
+    ]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["**/node_modules/*", "./dist"]
+}

@@ -1,0 +1,14 @@
+hostname: 127.0.0.1
+port: 4004
+# Restrictive local client origin.
+cors-allow-origin: http://localhost:4000
+# One external domain.
+# cors-allow-origin: https://client.example.org
+# Three external domains.
+# cors-allow-origin:
+#   - https://client-a.example.org
+#   - https://client-b.example.org
+#   - https://client-c.example.org
+cors-allow-credentials: false
+tls: false
+certs: ./certs

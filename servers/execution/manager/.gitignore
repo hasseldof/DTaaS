@@ -1,0 +1,5 @@
+node_modules/
+coverage/
+dist/
+src.svg
+test.svg
