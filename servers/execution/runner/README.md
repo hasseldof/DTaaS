@@ -1,4 +1,4 @@
-# :runner: Runner
+# Runner
 
 A utility service for the safe execution of remote scripts and commands.
 Users launch this from the command line and the utility manages
@@ -10,16 +10,17 @@ Multiple runner instances can be active simultaneously on one machine.
 Commands are submitted via the REST API and executed on the host
 running the runner.
 
-:warning: Thanks for trying out this software.
+Warning: Thanks for trying out this software.
 This software is in early stages of development and is not
 recommended for production use. Each released package will have
 a working API and matching documentation in this README.
 However, there will be breaking changes in the API across each release
 until the package reaches version 1.0.0.
 
-:x: This package does not work on Windows OS.
+The runner works on Linux and Windows. On Windows, it runs
+the PowerShell version of each script (see [Create Commands](#create-commands)).
 
-## :arrow_down: Install
+## Install
 
 ### NPM Registry
 
@@ -50,18 +51,24 @@ your Github username and the password is your Github
 In order for the npm to download the package, your personal access token
 needs to have _read:packages_ scope.
 
-## :gear: Configure
+## Configure
 
 The utility requires config specified in YAML format.
-The template configuration file is:
+A sample configuration is given below. Copy it into a file named
+_runner.yaml_, and update the values for your setup:
 
-```ini
+```yaml
 port: 5000
-location: 'script' #directory location of scripts
-commands: #list of permitted scripts
+location: 'scripts'  # directory of scripts, relative to this config file
+commands:  # list of permitted scripts
   - create
   - execute
+  - terminate
 ```
+
+With this configuration, the scripts are placed in a `scripts` directory
+next to _runner.yaml_, and only the _create_, _execute_ and _terminate_
+scripts can be run.
 
 It is suggested that the configuration file be named as _runner.yaml_
 and placed in the directory in which the _runner_ microservice is run.
@@ -74,10 +81,10 @@ the `location`. The path to _runner.yaml_ can either be relative or
 absolute path. However, the `location` path is always relative path
 with respect to the path of _runner.yaml_ file.
 
-:warning: Ensure that the commands have execute permission
+Warning: Ensure that the commands have execute permission
 on Linux platforms.
 
-## :pen: Create Commands
+## Create Commands
 
 The runner requires commands / scripts to be run.
 These need to be placed in the `location` specified in
@@ -88,7 +95,17 @@ the two scripts: _create_ and _execute_. These two become
 valid command names that consumers of REST API can invoke.
 All other command execution requests result in invalid status.
 
-## :rocket: Use
+On Windows, each command needs a PowerShell script with the `.ps1`
+extension, for example _create.ps1_ for the _create_ command.
+The runner executes it with `powershell.exe -ExecutionPolicy Bypass -File`.
+A directory can hold both versions of a script, so that the same
+commands work on Linux and Windows.
+
+The `DOCKER.md` file in the
+[runner source](https://github.com/INTO-CPS-Association/DTaaS/tree/feature/distributed-demo/servers/execution/runner)
+describes running the runner in a docker container.
+
+## Use
 
 Display help.
 
@@ -219,7 +236,7 @@ Both valid and invalid commands are recorded in the history.
 ]
 ```
 
-## :balance_scale: License
+## License
 
 This software is owned by
 [The INTO-CPS Association](https://into-cps.org/)

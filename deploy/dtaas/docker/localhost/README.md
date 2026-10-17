@@ -1,5 +1,6 @@
 <!-- markdownlint-disable MD041 -->
-![DTaaS logo](dtaas.png)
+![DTaaS logo](dtaas-logo-full.svg#gh-light-mode-only)
+![DTaaS logo](dtaas-logo-full-white.svg#gh-dark-mode-only)
 
 Thank you for downloading **Digital Twin as a Service**.
 
@@ -40,6 +41,14 @@ Edit `config/.env` and set `DEFAULT_USER`, then create a matching workspace:
 ```bash
 cp -R files/template files/<DEFAULT_USER>
 sudo chown -R 1000:100 files/*
+```
+
+The logger microservice writes its events to `logs/logger`. Create the
+directory and give it to uid 1000, the user that runs the logger:
+
+```bash
+mkdir -p logs/logger
+sudo chown -R 1000:1000 logs/logger
 ```
 
 ### 3. Start Services

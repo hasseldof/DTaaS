@@ -5,7 +5,10 @@ import Tooltip from '@mui/material/Tooltip';
 import {
   LibraryIcon,
   DigitalTwinsIcon,
+  AutomationIcon,
   WorkbenchIcon,
+  BuildingModelsIcon,
+  InsightsIcon,
 } from 'components/appIcons';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -25,10 +28,28 @@ const menuItems: MenuItemEntry[] = [
     link: '/digitaltwins',
   },
   {
+    index: 3,
+    name: 'Automation',
+    icon: <AutomationIcon />,
+    link: '/automation',
+  },
+  {
+    index: 4,
+    name: 'Buildings',
+    icon: <BuildingModelsIcon />,
+    link: '/bim',
+  },
+  {
     index: 5,
     name: 'Workbench',
     icon: <WorkbenchIcon />,
     link: '/workbench',
+  },
+  {
+    index: 6,
+    name: 'Insights',
+    icon: <InsightsIcon />,
+    link: '/insights',
   },
 ];
 

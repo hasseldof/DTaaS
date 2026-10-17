@@ -7,7 +7,10 @@ import MenuItems from 'page/MenuItems';
 const menuEntries = [
   { name: 'Library', link: '/library' },
   { name: 'Digital Twins', link: '/digitaltwins' },
+  { name: 'Automation', link: '/automation' },
+  { name: 'Buildings', link: '/bim' },
   { name: 'Workbench', link: '/workbench' },
+  { name: 'Insights', link: '/insights' },
 ];
 
 const renderMenu = (open: boolean, pathname = '/') =>
@@ -18,6 +21,14 @@ const renderMenu = (open: boolean, pathname = '/') =>
   );
 
 describe('MenuItems', () => {
+  it('Lists the items in the agreed order', () => {
+    renderMenu(true);
+
+    expect(screen.getAllByRole('link').map((link) => link.textContent)).toEqual(
+      menuEntries.map((entry) => entry.name),
+    );
+  });
+
   it('renders every menu item with its label and link', () => {
     renderMenu(true);
 

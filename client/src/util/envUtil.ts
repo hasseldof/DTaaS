@@ -1,5 +1,7 @@
 import { useSelector } from 'react-redux';
+import { useAuth } from 'react-oidc-context';
 import { RootState } from 'store/store';
+import { resolveOAuthUsername } from 'util/auth/oauthUserProfile';
 
 /**
  * @param url or endpoint to clean
@@ -14,15 +16,32 @@ export function cleanUsername(username: string | undefined): string {
 }
 
 /**
+ * The signed-in user's name, as every workspace address needs it.
+ *
+ * PrivateRoute records the name in the store in an effect, and an effect runs
+ * after the page has rendered once. Read from the store alone, the first render
+ * of a page opened directly builds an address with no name in it, such as
+ * //lab, and an embedded frame loads that address before the right one. The
+ * OIDC profile already holds the name on that first render, so it is read
+ * from there when the store has none yet.
+ */
+export function useUsername(): string {
+  const stored = useSelector((state: RootState) => state.auth).userName;
+  const auth = useAuth();
+  const fromProfile = auth?.user
+    ? resolveOAuthUsername(auth.user.profile)
+    : undefined;
+  return cleanUsername(stored || fromProfile);
+}
+
+/**
  * Injects the `username` into the `baseURL` and `endpoint` to create a link.
  * @param baseURL Example `https://intocps.org` Any leading or trailing slashes will be removed.
  * @param endpoint (optional). Example `bar` Any leading or trailing slashes will be removed.
  * @returns a complete URL: `baseUrl` / `username` / `endpoint`
  */
 const useUserLink = (baseURL: string, endpoint?: string): string => {
-  const username = cleanUsername(
-    useSelector((state: RootState) => state.auth).userName,
-  );
+  const username = useUsername();
   const cleanBaseURL = cleanURL(baseURL);
   const cleanEndpoint = cleanURL(endpoint ?? '');
   return `${cleanBaseURL}/${username}/${cleanEndpoint}`;
@@ -47,12 +66,6 @@ export function useAppURL(): string {
 export interface KeyLinkPair {
   key: string;
   link: string;
-  /**
-   * True when the link is a page of this application and not a separate
-   * service. Set here because this is where the two preview pages are named,
-   * and a second list elsewhere would drift from this one.
-   */
-  opensInApp?: boolean;
 }
 
 /**
@@ -75,12 +88,11 @@ function buildUserLink(
  * Workspace tool links (Desktop, VS Code, Jupyter Lab, Jupyter Notebook) are derived from the
  * services JSON fetched from `{appURL}/{username}/services` and stored in the Redux store.
  *
- * Preview links (LIBRARY_PREVIEW, DT_PREVIEW) continue to be read from environment variables.
+ * The library and digital twins previews are no longer workbench links: they
+ * are pages of this application, reached from the Automation page instead.
  */
 export function useWorkbenchLinkValues(): KeyLinkPair[] {
-  const username = cleanUsername(
-    useSelector((state: RootState) => state.auth).userName,
-  );
+  const username = useUsername();
   const services = useSelector((state: RootState) => state.workbench.services);
   const appURL = useAppURL();
   const workbenchLinkValues: KeyLinkPair[] = [];
@@ -102,26 +114,6 @@ export function useWorkbenchLinkValues(): KeyLinkPair[] {
     }
   });
 
-  const prefix = 'REACT_APP_WORKBENCHLINK_';
-  Object.keys(globalThis.env)
-    .filter((key) => key.startsWith(prefix))
-    .forEach((key) => {
-      const value = globalThis.env[key];
-      if (value !== undefined) {
-        const keyWithoutPrefix = key.slice(prefix.length);
-        if (
-          keyWithoutPrefix === 'DT_PREVIEW' ||
-          keyWithoutPrefix === 'LIBRARY_PREVIEW'
-        ) {
-          workbenchLinkValues.push({
-            key: keyWithoutPrefix,
-            link: value,
-            opensInApp: true,
-          });
-        }
-      }
-    });
-
   return workbenchLinkValues;
 }
 
@@ -133,7 +125,9 @@ export function getClientID(): string {
   return globalThis.env.REACT_APP_CLIENT_ID;
 }
 
-export { default as getAuthority } from 'model/backend/util/env';
+export function getAuthority(): string {
+  return globalThis.env.REACT_APP_AUTH_AUTHORITY;
+}
 
 export function getRedirectURI(): string {
   return globalThis.env.REACT_APP_REDIRECT_URI;

@@ -1,4 +1,4 @@
-# 📖 Developer Instructions
+# Developer Instructions
 
 ## Prerequisites
 
@@ -9,12 +9,12 @@ Install it with:
 npm install -g pm2
 ```
 
-## :gear: Configure
+## Configure
 
 This microservice needs library assets and configuration
 file. Please see [README](./README.md) for this information.
 
-## :hammer_and_wrench: Developer Commands
+## Developer Commands
 
 ```bash
 yarn install    # Install dependencies for the microservice
@@ -36,6 +36,12 @@ yarn clean      # Deletes "build", "coverage", "dist" and other temp files
 
 **NOTE:** The integration, end-to-end and http tests require a valid
 configuration. This configuration is already set in `libms.test.yaml` file.
+
+**NOTE:** `jest` is pinned to `~30.4.2`. Jest 30.5 adds the `module-sync`
+export condition to `require()` resolution, so `@nestjs/graphql` (CommonJS)
+loads the ES module build of graphql 17. The end-to-end tests then fail with
+_"Cannot require() ES Module ... in a cycle"_ on Node 24 and Node 26.
+Do not widen this range until the end-to-end tests pass with a newer jest.
 
 ## Service Endpoint
 
@@ -67,13 +73,13 @@ To kill a process, use:
 
 **NOTE:** To list processes spawned by pm2, use `pm2 list`.
 
-## :package: :ship: Packages
+## Packages
 
 ### Docker images
 
 The docker version of lib microservice is packaged with the DTaaS
 application release.
-Please see [publishing](../../developer/README.md) page
+Please see [publishing](../../developer/check/README.md) page
 for more information publishing docker images.
 
 ### Default NPM Registry
@@ -118,7 +124,7 @@ The microservices require configuration and the docker version
 of the microservices uses the configuration
 file available in `config/libms.dev.yaml`.
 
-For more see [configuration documentation](./README.md#gear-configure).
+For more see [configuration documentation](./README.md#configure).
 The `config/libms.dev.yaml` file is used for configuration of the container.
 
 A new directory named `files` is created in `servers/lib` directory and

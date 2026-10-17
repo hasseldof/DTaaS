@@ -85,6 +85,8 @@ default = true
 
 [[plugin]]
 name = "actionlint"
+# 1.7.10 and later understand YAML anchors, which the workflows use.
+version = "1.7.12"
 
 [[plugin]]
 name = "dotenv-linter"
@@ -155,6 +157,11 @@ name = "shellcheck"
 
 [[plugin]]
 name = "shfmt"
+
+# Indent shell scripts by two spaces, as the repository's scripts do;
+# shfmt indents with tabs unless told otherwise.
+[plugins.definitions.shfmt.drivers.format]
+script = "shfmt -w -s -i 2 -ci ${target}"
 
 [[plugin]]
 name = "trufflehog"

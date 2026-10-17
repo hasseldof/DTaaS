@@ -1,16 +1,19 @@
-# React Client :computer:
+# React Client
 
-The DTaaS web client is a React + TypeScript single page application.
-It provides user-facing workflows for DT composition, asset browsing,
-configuration, and DevOps-driven execution.
+The DTaaS web client is a React and TypeScript single page application.
+Users compose digital twins, browse assets, edit configuration and run
+digital twins through GitLab pipelines from it.
 
 ## Current Stack
 
 - React 19
 - React Router 7
 - Redux Toolkit 2
-- Material UI 7
+- Material UI 9
+- Vite 8 for the development server and production build
 - Gitbeaker REST client for GitLab APIs
+- Jest 30 and React Testing Library for unit and integration tests,
+  Playwright for end-to-end tests
 
 ## Current Source Layout
 
@@ -22,15 +25,10 @@ client/
 │   ├── routes.tsx
 │   ├── components/
 │   ├── database/
-│   ├── model/
-│   │   └── backend/
-│   │       ├── interfaces/
-│   │       ├── gitlab/
-│   │       ├── util/
-│   │       └── ...
 │   ├── page/
 │   ├── route/
 │   ├── store/
+│   ├── theme/
 │   ├── util/
 │   └── utils/
 ├── test/
@@ -40,24 +38,36 @@ client/
 │   └── e2e/
 ├── config/
 ├── public/
+├── index.html
+├── vite.config.ts
 └── package.json
 ```
 
+The `route/` directory holds one folder per page, including `bim/` for
+the Building Models page. The Material UI theme and design tokens live
+in `theme/`.
+
+The shared backend package lives under `lib/dt-automation/` and the
+client consumes it from npm as `@into-cps-association/dt-automation`.
+The Building Models page comes from `@into-cps-association/bim-kit`,
+which is maintained in the
+[ifc-utils](https://github.com/INTO-CPS-Association/ifc-utils)
+repository. [Client Extensions](../system/extensions.md) describes both
+packages and the proposed extension architecture.
+
 ## Backend Integration Layer
 
-The backend model layer in `src/model/backend/` encapsulates GitLab-backed operations.
+The `dt-automation` package wraps the GitLab-backed operations.
 
-Key classes:
+The main classes are:
 
 - `GitlabAPI`: low-level GitLab REST wrapper.
 - `GitlabInstance`: project and trigger-token context.
 - `DigitalTwin`: DT-level operations and execution history integration.
-- `LibraryAsset`: reusable asset access patterns.
+- `LibraryAsset`: access to reusable library assets.
 
-Important capability:
-
-- Batched file updates through `commitMultipleActions`, enabling one commit for
-    multiple create/update/delete operations.
+`commitMultipleActions` batches file updates, so one commit can carry
+several create, update and delete operations.
 
 ## Build and Test Commands
 
@@ -65,14 +75,21 @@ Run from `client/`:
 
 ```bash
 yarn syntax
+yarn build
+yarn config:test
 yarn test:unit
 yarn test:int
 yarn test:e2e
-yarn build
 ```
+
+Use the `test:unit` and `test:int` scripts rather than bare `jest`. The
+scripts pass `--setupFilesAfterEnv`, which installs the `react-redux`
+mock that many tests need.
 
 ## Notes for Contributors
 
 - Keep GitLab-specific logic in backend implementation modules.
-- Keep route/view components focused on presentation and user workflows.
-- Prefer typed interfaces in `model/backend/interfaces/` when extending API contracts.
+- Keep route and view components focused on presentation and user
+  workflows.
+- Prefer typed interfaces in `lib/dt-automation/src/interfaces/` when extending
+  API contracts.

@@ -2,7 +2,7 @@ import { useState, Dispatch, SetStateAction } from 'react';
 import { Grid, CircularProgress, Button, Box } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'store/store';
-import { FileState } from 'model/backend/interfaces/sharedInterfaces';
+import { FileState } from '@into-cps-association/dt-automation';
 import { handleAddFileClick } from 'route/digitaltwins/editor/sidebarFunctions';
 import SidebarDialog from 'route/digitaltwins/editor/SidebarDialog';
 import FileActionButtons from 'route/digitaltwins/create/FileActionButtons';
@@ -97,7 +97,7 @@ const Sidebar = ({
             data-logger-element="button"
             data-logger-label="Add new file"
           >
-            Add new file
+            Add New File
           </Button>
 
           {setOpenDeleteFileDialog && setOpenChangeFileNameDialog && (

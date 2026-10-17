@@ -21,6 +21,7 @@ For the quick-start installation guide, see [README.md](README.md).
     - [Important Rules](#important-rules)
   - [certs - TLS Certificates](#certs---tls-certificates)
   - [files - User Workspace Directories](#files---user-workspace-directories)
+  - [logs - Logger Microservice Events](#logs---logger-microservice-events)
   - [OAuth 2.0 Application Setup](#oauth-20-application-setup)
     - [DTaaS Client Authorization (React Frontend)](#dtaas-client-authorization-react-frontend)
     - [DTaaS Server Authorization (Traefik Forward-Auth)](#dtaas-server-authorization-traefik-forward-auth)
@@ -88,8 +89,6 @@ cp config/client.js.example config/client.js
 | `REACT_APP_URL_BASENAME` | `''` | Optional URL base path |
 | `REACT_APP_URL_DTLINK` | `/lab` | URL path for the Digital Twin workbench |
 | `REACT_APP_URL_LIBLINK` | `''` | URL path for the Library |
-| `REACT_APP_WORKBENCHLINK_LIBRARY_PREVIEW` | `/preview/library` | Library preview page |
-| `REACT_APP_WORKBENCHLINK_DT_PREVIEW` | `/preview/digitaltwins` | Digital Twins preview page |
 | `REACT_APP_CLIENT_ID` | _(from GitLab)_ | Application ID from **DTaaS Client Authorization** OAuth app |
 | `REACT_APP_AUTH_AUTHORITY` | `https://gitlab.com` | OAuth issuer URL |
 | `REACT_APP_REDIRECT_URI` | `https://intocps.org/Library` | Redirect URI after sign-in |
@@ -170,6 +169,17 @@ Create user directories:
 ```bash
 cp -R files/template files/<USERNAME>
 sudo chown -R 1000:100 files/*
+```
+
+## logs - Logger Microservice Events
+
+The logger microservice writes the captured events to
+`logs/logger/workflow-logs.jsonl`. Create the directory and give it to
+uid 1000, the user that runs the logger:
+
+```bash
+mkdir -p logs/logger
+sudo chown -R 1000:1000 logs/logger
 ```
 
 ## OAuth 2.0 Application Setup

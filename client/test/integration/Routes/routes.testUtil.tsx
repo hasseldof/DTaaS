@@ -4,6 +4,7 @@ import {
   closestDiv,
   itShowsTheTooltipWhenHoveringButton,
 } from 'test/integration/integration.testUtil';
+import { mockUser } from 'test/__mocks__/mockEnvConstants';
 
 export async function testLayout() {
   testFooter();
@@ -33,6 +34,8 @@ export async function testDrawer() {
   expect(screen.getByTestId(/ChevronLeftIcon/)).toBeInTheDocument();
   testDrawerItem(/^Library$/, /ExtensionRoundedIcon/);
   testDrawerItem(/^Digital Twins$/, /PeopleRoundedIcon/);
+  testDrawerItem(/^Automation$/, /PrecisionManufacturingRoundedIcon/);
+  testDrawerItem(/^Buildings$/, /ViewInArRoundedIcon/);
   testDrawerItem(/Workbench/, /HandymanRoundedIcon/);
 
   await itOpensAndClosesTheDrawer();
@@ -67,9 +70,12 @@ async function testSettingsButton() {
   });
   expect(settingsButton).toBeInTheDocument();
 
-  // The avatar carries a letter and no image, so nothing is fetched from the
-  // identity provider on every page.
-  expect(within(settingsButton).getByText('A')).toBeInTheDocument();
+  // The picture the provider supplies, taken from the same mock the provider
+  // is built from. The avatar used to be a fixed letter A, so every user saw
+  // the same one whoever they were. The fallback to an icon, for a provider
+  // that supplies no usable picture, is covered in the toolbar's own test.
+  const avatar = within(settingsButton).getByRole('img');
+  expect(avatar).toHaveAttribute('src', mockUser.profile.picture);
 
   // Has visible tooltip
   await itShowsTheTooltipWhenHoveringButton(labelText);

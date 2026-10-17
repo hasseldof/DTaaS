@@ -1,20 +1,21 @@
-# 📚 Documentation Workflow
+# Documentation Workflow
 
-This file defines the process for building, validating, and publishing project
-documentation.
+How to build, check and publish the project documentation.
 
-The documentation stack is based on
+The documentation is built with
 [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/).
-Two MkDocs configuration files are maintained:
+There are two MkDocs configuration files:
 
-- **mkdocs.yml**: primary project configuration.
-- **mkdocs-github.yml**: CI-oriented configuration used by GitHub Actions.
+- **mkdocs.yml**: the main configuration, which also declares the PDF
+  export plugin.
+- **mkdocs-github.yml**: the same configuration without the PDF plugin,
+  which builds on any platform.
 
-All commands below are intended to be executed from the repository root.
+Run all commands below from the repository root.
 
-## 📦 Install Documentation Dependencies
+## Install Documentation Dependencies
 
-Install documentation dependencies in the project virtual environment:
+Install the documentation dependencies in a virtual environment:
 
 ```bash
 python -m venv .venv
@@ -24,85 +25,91 @@ pip install -r script/docs/mkdocs-requirements.txt
 pip install -r script/docs/mkdocs-requirements-github.txt
 ```
 
-Fetch Git LFS-managed documentation assets before previewing or building the
-site:
+GitHub Actions installs the same packages from hash-locked files,
+`script/docs/mkdocs-requirements.lock` and
+`script/docs/mkdocs-requirements-github.lock`, which also pins `pytest`
+from `script/docs/test-requirements.txt`. After changing a requirements
+file, regenerate its lock on Linux with the `uv pip compile` command in
+the lock's header, moving `--exclude-newer` to ten days before the
+current date.
 
-```bash
-git lfs install
-git lfs pull --include="docs/**"
-```
+The documentation images and videos are stored in Git LFS. The
+`script/docs/docs.py` commands below fetch them before building; if they
+are missing, MkDocs aborts the build rather than copy pointer files into
+`site/`.
 
-If Git LFS assets are not fetched, MkDocs now aborts the build instead of
-copying pointer files into `site/`.
+## Run Markdown Linting
 
-## 🔍 Run Markdown Linting
-
-The repository uses markdown linting to enforce formatting consistency.
+Markdown linting keeps the formatting consistent.
 
 ```bash
 npx markdownlint-cli docs/**/*.md
 ```
 
-Any lint findings should be resolved prior to committing documentation changes.
+Fix any lint findings before committing documentation changes.
 
-## 📊 Format Markdown Tables
+## Format Markdown Tables
 
-Uneven table formatting can cause quality gate failures. The table formatter can
-be run as follows:
+Unevenly formatted tables can fail the quality gates. To format them, run:
 
 ```bash
 python script/docs/format_tables.py
 ```
 
-## 🏗️ Build and Preview Documentation
+## Build and Preview Documentation
 
-### Local Preview
-
-```bash
-#On Linux
-mkdocs serve -f mkdocs.yml
-# On Windows
-mkdocs serve -f mkdocs-github.yml
-```
-
-### Static Build Validation
+`script/docs/docs.py` builds and previews the documentation on Linux,
+macOS and Windows:
 
 ```bash
-mkdocs build -f mkdocs-github.yml
+# Preview with live reload
+python script/docs/docs.py serve
+
+# Build the HTML site into site/development
+python script/docs/docs.py build
+
+# Also build the PDF (Linux only)
+python script/docs/docs.py build --pdf
 ```
 
-For full configuration validation (including optional PDF plugin wiring), run:
+Without `--pdf`, the commands use `mkdocs-github.yml`. With `--pdf`, they
+use `mkdocs.yml`, whose PDF plugin needs the Pango libraries
+(`libpango-1.0-0` and `libpangoft2-1.0-0` on Debian and Ubuntu).
 
-```bash
-# On Linux
-export MKDOCS_ENABLE_PDF_EXPORT=0
-mkdocs build -f mkdocs.yml
+## Publish Documentation
 
-# On Windows
-set MKDOCS_ENABLE_PDF_EXPORT=0
-mkdocs build -f mkdocs-github.yml
-```
+The `Publish documentation` workflow
+(`.github/workflows/docs-publish.yml`) publishes the site at
+[https://into-cps-association.github.io/DTaaS/](https://into-cps-association.github.io/DTaaS/)
+through GitHub Pages. No one publishes by hand.
 
-## 🚀 Publish Documentation
+- Every push to `feature/distributed-demo` that changes the documentation
+  rebuilds the **development** version and its PDF, and deploys it.
+- A release tag such as `v1.0` or `v0.9.0` also publishes
+  **version1.0** or **version0.9**. The workflow commits that version and
+  its PDF to the `webpage-docs` branch, which stores every released
+  version, and deploys the site.
 
-MkDocs can produce HTML and, where enabled, PDF output. The PDF output
-generation is supported only on Linux.
+Before tagging a release, add its row to the table in
+`docs/redirect-page.html`, which becomes the landing page. The workflow
+refuses a release that the landing page does not list. The page takes its
+style from `docs/assets/css/landing.css`, and `script/docs/pages.py` copies
+that file, the logo and the fonts to the site root with it.
 
-PDF generation is controlled by the `MKDOCS_ENABLE_PDF_EXPORT` environment
-variable:
+To publish a release tagged before the workflow existed, run the workflow
+from the **Actions** tab on `feature/distributed-demo` and enter the tag.
 
-```bash
-export MKDOCS_ENABLE_PDF_EXPORT=0
-export MKDOCS_ENABLE_PDF_EXPORT=1
-```
+The development version is deployed without being committed, and
+`webpage-docs` must not route files through Git LFS: GitHub Pages serves
+the pointer file instead of the image it names, and the workflow refuses
+to publish either.
 
-To publish documentation content to the `webpage-docs` branch:
+GitHub Pages refuses sites larger than 1 GB. The workflow stops when the
+assembled site exceeds 900 MB; archive old versions or shrink their media
+before that point.
 
-```bash
-export MKDOCS_ENABLE_PDF_EXPORT=1
-script\docs.sh [version]
-git push webpage-docs
-```
+The workflow needs two repository settings:
 
-The published site is served via GitHub Pages at
-[https://into-cps-association.github.io/DTaaS/](https://into-cps-association.github.io/DTaaS/).
+- **Settings > Pages > Build and deployment > Source**: GitHub Actions.
+- **Settings > Environments > github-pages > Deployment branches and
+  tags**: `feature/distributed-demo` and the tag pattern `v*`.

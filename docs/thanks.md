@@ -2,24 +2,20 @@
 
 ## Funding Sources
 
-This project has been funded by the following projects.
+The following projects have funded this project.
 
 * Sustainable Water-based Cooling in Megacities (SWiM) - a project
-  sponsored by the Grundfos Foundation
+  sponsored by the Grundfos Foundation.
 * Security for the Digital Twin as a Service Platform - a project sponsored by
-  Thomas B. Thriges Foundation
+  the Thomas B. Thriges Foundation.
 * CP-SENS (Cyber-Physical Sensing for Machinery and Structures) -
   a Grand Solution project funded by the Innovation Fund Denmark under
   the grant agreement 2081-00006B.
-* The DIGITbrain (Digital Twins for Manufacturing SMEs) - a European Union’s
-  Horizon 2020 research and innovation program under grant agreement No 952071.
+* DIGITbrain (Digital Twins for Manufacturing SMEs) - a project funded by
+  the European Union's Horizon 2020 research and innovation programme under
+  grant agreement No 952071.
 * Digital Twins for Cyber-Physical Systems (DiT4CPS) - a project sponsored by
   the Grundfos Foundation.
-
-## Developers
-
-Please see the list of contributors on
-[code contributors](https://github.com/INTO-CPS-Association/DTaaS/graphs/contributors)
 
 ## Example Contributors
 
@@ -42,13 +38,22 @@ Please see the list of contributors on
 | Incubator with NuRV Runtime Monitor FMU as Service    | Valdemar Tang and Morten Haahr Kristensen   |
 | Incubator with NuRV Runtime Monitor as Service        | Morten Haahr Kristensen and Valdemar Tang   |
 
+## Developers
+
+See the list of
+[code contributors](https://github.com/INTO-CPS-Association/DTaaS/graphs/contributors)
+on GitHub.
+
 ## Documentation
 
 1. Talasila, P., Gomes, C., Mikkelsen, P. H., Arboleda, S. G., Kamburjan,
    E., & Larsen, P. G. (2023).
    Digital Twin as a Service (DTaaS): A Platform for
-   Digital Twin Developers and Users
-   [arXiv preprint arXiv:2305.07244](https://arxiv.org/abs/2305.07244).
+   Digital Twin Developers and Users.
+   In 2023 IEEE Smart World Congress (SWC), pp. 1-8. IEEE.
+   [doi:10.1109/SWC57546.2023.10448890](https://doi.org/10.1109/SWC57546.2023.10448890).
+   Preprint: [arXiv:2305.07244](https://arxiv.org/abs/2305.07244).
 1. Astitva Sehgal for developer and example documentation.
+1. Jady Pamella Barbacena da Silva for the documentation theme and diagrams.
 1. Tanusree Roy and Farshid Naseri for asking interesting questions
-   that ended up in FAQs.
+   that ended up in the FAQ.

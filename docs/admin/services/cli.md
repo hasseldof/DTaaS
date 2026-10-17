@@ -1,16 +1,16 @@
 # Platform Services
 
-It is recommended to install certain third-party software for use
-by digital twins running inside the DTaaS software.
+Digital twins running inside DTaaS often need third-party services, and
+we recommend installing them alongside the platform.
 _These services can only be installed in secure (TLS) mode._
 
 The following services can be installed:
 
 * **Influx** time-series database and dashboard service
 * **Grafana** visualisation and dashboard service
-* **RabbitMQ** AMQP broker and its management interface
-  The **MQTT plugin** of this broker has been enabled.
-  So, it can also be used as **MQTT** broker.
+* **RabbitMQ** AMQP broker and its management interface.
+  The **MQTT plugin** of this broker is enabled,
+  so it can also be used as an **MQTT** broker.
 * **MongoDB** database server
 * **ThingsBoard** IoT device management and data visualisation platform
   (with PostgreSQL backend)
@@ -18,19 +18,18 @@ The following services can be installed:
 
 ## DTaaS Services CLI
 
-A command-line tool for managing DTaaS platform services including MongoDB,
-InfluxDB, RabbitMQ, Grafana, ThingsBoard, and GitLab.
+The `dtaas-services` command-line tool manages the DTaaS platform services:
+MongoDB, InfluxDB, RabbitMQ, Grafana, ThingsBoard and GitLab.
 
 ## Features
 
-* **Project Initialisation:** Generate project structure with config
-  and data directories
-* **Automated Setup:** One command setup of TLS certificates and permissions
-* **Service Management:** Start, stop, and check status of all services
-* **User Management:** Easy creation of user accounts in InfluxDB,
-  RabbitMQ, MongoDB, PostgreSQL, ThingsBoard, and GitLab
-* **Cross platform:** Works on Linux, macOS, and Windows
-* **Configuration-driven:** Reads settings from `config/services.env`
+* Generates a project structure with config and data directories.
+* Sets up TLS certificates and file permissions with one command.
+* Starts, stops and reports the status of all services.
+* Creates user accounts in InfluxDB, RabbitMQ, MongoDB, PostgreSQL,
+  ThingsBoard and GitLab.
+* Runs on Linux, macOS and Windows.
+* Reads its settings from `config/services.env`.
 
 ## Prerequisites
 
@@ -54,102 +53,168 @@ To verify the installation:
 dtaas-services --help
 ```
 
+Commands follow the form `dtaas-services <noun> <verb>`. The nouns are
+`project`, `host`, `service` and `user`, listed in the order you use them.
+
 ## Quick Start
 
-1. Navigate to the desired setup location and generate the project
+1. Go to the desired setup location and generate the project
    structure:
 
    ```bash
-   dtaas-services generate-project
+   dtaas-services project generate
    ```
 
    This creates:
-   * `config` is used for storing the service configuration
-   * `data` is used by the services for storing data
-   * `certs` is used for storing the TLS certificates needed by the services
-   * `compose.services.yml` for main services
-   * `compose.thingsboard.yml` for ThingsBoard and PostgreSQL
+   * `config` for the service configuration
+   * `data`, where the services store their data
+   * `log` for the GitLab and ThingsBoard logs
+   * `certs` for the TLS certificates the services need
+   * `compose.services.yml` for the main services, including PostgreSQL
+   * `compose.thingsboard.yml` for ThingsBoard
+   * `compose.gitlab.yml` for GitLab
 
 2. Update `config/services.env` with the environment values:
-   * `HOSTNAME`: Public hostname of the DTaaS server (used for certificate paths)
-   * `GITLAB_PORT`: Port for the local GitLab instance (default: `8090`)
-   * `GITLAB_ROOT_NEW_PASSWORD`: Strong password to set for the GitLab root admin
-   * `TB_SYSADMIN_NEW_PASSWORD`: New password for the ThingsBoard system admin
-   * Port numbers for each service
-   * `TB_TENANT_ADMIN_PASSWORD`: New password for the tenant admin
-   * `SERVICES_UID`: User ID for service file ownership
-   * `SERVICES_GID`: Group ID for service file ownership
-   * **OAuth Configuration** (optional: customise GitLab OAuth app registrations):
-        Edit `config/gitlab_oauth.json` to adjust app names, redirect URIs, scopes,
-        or confidentiality settings before running `dtaas-services install -s gitlab`.
-        The file is created automatically by `dtaas-services generate-project`.
-        To use a different filename, set `OAUTH_APPS=<filename>` in `config/services.env`
-        (the file is still looked up in `config/`).
+   * `HOSTNAME`: public hostname of the DTaaS server (used for
+     certificate paths)
+   * `CERTS_SRC`: directory that holds the TLS certificates to copy
+   * `GITLAB_PORT`: port for the local GitLab instance (default: `8090`)
+   * `GITLAB_ROOT_NEW_PASSWORD`: strong password to set for the GitLab
+     root admin
+   * `TB_SYSADMIN_NEW_PASSWORD`: new password for the ThingsBoard
+     system admin
+   * `TB_TENANT_ADMIN_PASSWORD`: new password for the tenant admin
+   * port numbers for each service
+   * `USERID` and `GROUPID`: user and group ID that the Grafana
+     container runs as
+   * OAuth configuration (optional, to customise the GitLab OAuth app
+     registrations):
+     edit `config/gitlab_oauth.json` to adjust app names, redirect URIs,
+     scopes or confidentiality settings before running
+     `dtaas-services service install -s gitlab`.
+     `dtaas-services project generate` creates this file.
+     To use a different filename, set `OAUTH_APPS=<filename>` in
+     `config/services.env`; the file is still looked up in `config/`.
 
-3. Update `config/credentials.csv` with user accounts (format: `username,password,email`)
+3. Update `config/credentials.csv` with user accounts
+   (format: `username,password,email`).
 
 **Options:**
 
-* `--path` Directory to generate project structure (default: current directory)
+* `--path` Directory to generate the project structure in
+  (default: current directory)
+* `--force` Refresh the packaged files of an existing project (see below)
 
 **Example:**
 
 ```bash
-dtaas-services generate-project --path /path/to/project
+dtaas-services project generate --path /path/to/project
 ```
+
+### Refreshing an existing project
+
+By default an item that already exists is skipped, so re-running the command
+is safe but picks up nothing new. After upgrading the package, `--force`
+refreshes the files that ship with it:
+
+```bash
+dtaas-services project generate --force
+```
+
+It overwrites the three `compose.*.yml` files and the packaged files under
+`config/`. It never touches `data/`, `log/` or `certs/`, and it never
+overwrites these files, which are reported as kept:
+
+* `services.env`, `credentials.csv`, `gitlab_oauth.json`
+* `gitlab_tokens.json`, `gitlab_user_tokens.json`, `current.passwords.env`
+* `mongod.conf.secure`, `rabbitmq.conf`, `rabbitmq.enabled_plugins`
+
+The first six hold your settings and live credentials; the last three are
+service configuration you may have hardened locally. Overwritten files and
+existing directories keep the permissions they already had, so a tightened
+`config/` stays tightened. To adopt the packaged version of a kept file, copy
+it aside, delete it and run the command again.
+
+Review the refreshed files before starting the services, and re-run
+`dtaas-services host setup` if certificate or service file permissions were
+affected.
 
 ## Usage
 
 ### Service Setup
 
-After generating the project and configuring the settings:
+After generating the project and configuring the settings, run:
 
 ```bash
-dtaas-services setup
+dtaas-services host setup
 ```
 
-This command will:
+This command:
 
-* Copy TLS certificates to the correct locations
-* Set up MongoDB certificates and permissions
-* Set up InfluxDB certificates and permissions
-* Set up RabbitMQ certificates and permissions
-* Set up PostgreSQL and ThingsBoard certificates and permissions
+* copies the TLS certificates to the correct locations
+* sets up MongoDB certificates and permissions
+* sets up InfluxDB certificates and permissions
+* sets up RabbitMQ certificates and permissions
+* sets up ThingsBoard certificates and permissions
 
-Ensure the clean command is run right after:
+Run the clean command right after it:
 
 ```bash
-dtaas-services clean
+dtaas-services service clean
 ```
 
 ### Managing Services
 
-Now services can be managed by simple commands such as start, stop, remove,
-restart, and status.
+The `service` commands start, stop, restart, remove and report the status
+of the services.
 
 Example:
 
 ```bash
-dtaas-services start
+dtaas-services service start
 ```
 
-A specific service can be specified:
+To act on one service only, name it:
 
 ```bash
-dtaas-services stop -s influxdb
+dtaas-services service stop -s influxdb
 ```
 
 Remove services and their volumes:
 
 ```bash
-dtaas-services remove -v
+dtaas-services service remove --volumes
 # Specify
-dtaas-services remove -v -s <service_name>
+dtaas-services service remove --volumes -s <service_name>
 ```
+
+`service status` prints a table by default. For scripting, `--json` prints a
+JSON array on stdout, one object per container, so services that share a
+container label are all listed:
+
+```bash
+dtaas-services service status --json
+```
+
+```json
+[
+  { "service": "gitlab", "container": "gitlab", "status": "running" },
+  { "service": "grafana", "container": "grafana", "status": "removed" }
+]
+```
+
+Failures are still reported as text on stderr, so a script can read stdout
+only.
+
+> **Note:** `-s` accepts a comma-separated list. A selector that names no
+> service, such as `-s ""` from an unset shell variable, is an error rather
+> than a silent "all services", so a mistyped selector cannot remove or clean
+> more than you intended. Omit the flag entirely to act on all services.
 
 ### User Account Management
 
-1. Edit `config/credentials.csv` with user accounts (format: `username,password,email`)
+1. Edit `config/credentials.csv` with user accounts
+   (format: `username,password,email`).
 
 2. Add users to all supported services:
 
@@ -158,8 +223,7 @@ dtaas-services remove -v -s <service_name>
     ```
 
     This creates user accounts in InfluxDB, RabbitMQ, MongoDB, PostgreSQL,
-    ThingsBoard, and GitLab
-    (each service is skipped gracefully if it is not running).
+    ThingsBoard and GitLab. A service that is not running is skipped.
     For GitLab, a Personal Access Token is created for each new user and
     saved to `config/gitlab_user_tokens.json`.
 
@@ -171,33 +235,32 @@ dtaas-services remove -v -s <service_name>
 
 ## ThingsBoard
 
-It is recommended to install the third-party software ThingsBoard
-for use by digital twins running inside the DTaaS software.
-This service can only be installed in secure (TLS) mode.
+We recommend ThingsBoard for digital twins that need IoT device management.
+It can only be installed in secure (TLS) mode.
 
-The steps given above install two services:
+The ThingsBoard setup uses two services:
 
-* **ThingsBoard** is an IoT device management and data visualisation platform
-* **PostgreSQL** is a database server for ThingsBoard
+* **ThingsBoard**, an IoT device management and data visualisation platform
+* **PostgreSQL**, the database server for ThingsBoard
 
 ### ThingsBoard Installation
 
-> **Warning:** Running `dtaas-services install -s thingsboard` more than once
-> will re-run the ThingsBoard schema migration against an already-populated
-> PostgreSQL database, which can corrupt it. To reinstall from
-> scratch, run `dtaas-services clean -s "postgres,thingsboard"` first to wipe
-> all data before re-running the install command.
-> **Note:** It is recommended to specify the service explicitly with `-s <service>`
-> when installing.
-> Ensure that the clean command has been run before the installation.
+> **Warning:** Running `dtaas-services service install -s thingsboard`
+> more than once re-runs the ThingsBoard schema migration against an
+> already populated PostgreSQL database, which can corrupt it. To reinstall
+> from scratch, first run
+> `dtaas-services service clean -s "postgres,thingsboard"` to wipe all data,
+> then re-run the install command.
+> **Note:** Name the service explicitly with `-s <service>` when installing.
+> Run the clean command before the installation.
 
 ```bash
 # It starts PostgreSQL if it is not running, and it checks its health.
-dtaas-services install -s thingsboard
+dtaas-services service install -s thingsboard
 ```
 
 ```bash
-dtaas-services start -s thingsboard
+dtaas-services service start -s thingsboard
 ```
 
 ```bash
@@ -206,7 +269,7 @@ dtaas-services start -s thingsboard
 dtaas-services user add -s thingsboard
 ```
 
-Reset the ThingsBoard sysadmin and tenant admin passwords using values
+Reset the ThingsBoard sysadmin and tenant admin passwords to the values
 configured in `config/services.env`:
 
 ```bash
@@ -215,87 +278,91 @@ dtaas-services user reset-password -s thingsboard
 
 This command:
 
-* Changes the sysadmin password from the default (`"sysadmin"`) to
+* changes the sysadmin password from the default (`"sysadmin"`) to
   `TB_SYSADMIN_NEW_PASSWORD`
-* Changes the tenant admin password from the default (`"tenant"`) to
-   `TB_TENANT_ADMIN_PASSWORD`
+* changes the tenant admin password from the default (`"tenant"`) to
+  `TB_TENANT_ADMIN_PASSWORD`
 
 ### GitLab Installation
 
 **Prerequisites:**
 
 * The GitLab container joins the `dtaas-services` Docker network
-   (`platform-services`), which is created automatically when the other
-   platform services are running. Start them first with
-   `dtaas-services start` before installing GitLab.
+  (`platform-services` in the compose files), which is created when the
+  other platform services start. Start them first with
+  `dtaas-services service start` before installing GitLab.
 * Set `REACT_APP_AUTH_AUTHORITY` in the client config file to
   `https://<hostname>:<GITLAB_PORT>/gitlab`.
 
 > **Note:** The DTaaS client uses `react-oidc-context`, which forces
 > redirects to use HTTPS. GitLab must therefore be served over HTTPS
-> at `https://<hostname>:<GITLAB_PORT>/gitlab`
+> at `https://<hostname>:<GITLAB_PORT>/gitlab`.
 
 To install and configure the local GitLab instance:
 
 ```bash
-dtaas-services install -s gitlab
+dtaas-services service install -s gitlab
 ```
 
 GitLab takes 5 to 10 minutes to become healthy after the first start.
 The install command checks GitLab readiness and returns immediately:
 
-* **If GitLab is healthy:** the command runs post-install setup
-   (password reset, PAT creation, OAuth app registration) and
-   saves the access token to `config/gitlab_tokens.json`.
-* **If GitLab is still starting:** the command prints a status hint
-   and exits. Check progress with `dtaas-services status -s gitlab`
-   and re-run `dtaas-services install -s gitlab` once the status
-   shows `healthy`.
+* If GitLab is healthy, the command runs the post-install setup
+  (PAT creation, OAuth app registration and root password reset) and
+  saves the tokens to `config/gitlab_tokens.json`.
+* If GitLab is still starting, the command prints a status hint
+  and exits. Check progress with `dtaas-services service status -s gitlab`
+  and re-run `dtaas-services service install -s gitlab` once the status
+  shows `running`.
 
 > **Note:** After a successful setup, `config/gitlab_tokens.json` is backed
 > up to `config/backup_gitlab_tokens.json` and the `root_password` entry is
 > removed from the live tokens file.
 > If the GitLab installation becomes corrupted before the root password is
-> changed, the initial password can be found in the backup file:
+> changed, the initial password can be found in the backup file
 > `config/backup_gitlab_tokens.json`.
 > If that file is also missing, re-install GitLab to generate a new
 > initial password.
-> **Warning:** `config/password.env.current` is managed automatically by
-> the CLI and tracks the current service passwords. Do **not** edit or delete
-> this file manually, as doing so may cause password reset commands to fail.
+> **Warning:** The CLI manages `config/password.env.current`, which tracks
+> the current service passwords. Do **not** edit or delete this file
+> manually; doing so may cause the password reset commands to fail.
 
 To complete the OAuth2 integration with DTaaS and set up GitLab Runner,
 follow the [integration guide](../gitlab/integration.md) and the runner
-setup guides for either [Linux](../gitlab/runner-linux.md) or
+setup guide for either [Linux](../gitlab/runner-linux.md) or
 [Windows](../gitlab/runner-windows.md).
 
-Reset the GitLab root admin password using the value configured in
+Reset the GitLab root admin password to the value configured in
 `config/services.env` (`GITLAB_ROOT_NEW_PASSWORD`):
 
 ```bash
 dtaas-services user reset-password -s gitlab
 ```
 
-The command reads the new password to `GITLAB_ROOT_NEW_PASSWORD`
-and applies it via the GitLab API.
+The command reads the new password from `GITLAB_ROOT_NEW_PASSWORD`
+and applies it through the GitLab API.
 
 ## GitLab Post-Install Flow
 
-The `dtaas-services install -s gitlab` command performs the following steps
-automatically:
+The `dtaas-services service install -s gitlab` command performs these
+steps:
 
 1. Starts the GitLab Docker container.
 2. Checks whether GitLab is healthy.
 3. Reads the auto-generated root password from the container
-    (`/etc/gitlab/initial_root_password`).
-4. Creates an initial Personal Access Token and saves it to
-    `config/gitlab_tokens.json`.
-5. Creates server and client OAuth application tokens.
+   (`/etc/gitlab/initial_root_password`).
+4. Creates an initial Personal Access Token.
+5. Creates the server and client OAuth applications.
+6. Saves the root password, token and OAuth application details to
+   `config/gitlab_tokens.json`.
+7. Resets the root password to `GITLAB_ROOT_NEW_PASSWORD`.
+8. Backs up the tokens file to `config/backup_gitlab_tokens.json` and
+   removes the root password from `config/gitlab_tokens.json`.
 
 ## Manual Compose Operations
 
-After generating a services project, services may be operated manually with
-compose files:
+After generating a services project, you can also run the services
+directly with the compose files:
 
 * `compose.services.yml`
 * `compose.thingsboard.yml`
@@ -322,7 +389,7 @@ docker compose -f compose.gitlab.yml --env-file config/services.env down
 ### Permission Issues (Linux/macOS)
 
 ```bash
-sudo -E env PATH="$PATH" dtaas-services setup
+sudo -E env PATH="$PATH" dtaas-services host setup
 ```
 
 ### Docker connectivity
@@ -333,5 +400,5 @@ docker ps
 
 ### ThingsBoard connection error
 
-After starting ThingsBoard and before adding users or changing passwords,
-allow some time for initialisation before adding users.
+ThingsBoard needs time to initialise after it starts. Wait before adding
+users or changing passwords.

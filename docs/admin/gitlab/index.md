@@ -1,27 +1,38 @@
 # GitLab Server
 
-DTaaS currently supports local GitLab installation using either:
+DTaaS supports two ways of installing a local GitLab instance.
 
 ## Option A: Integrated DTaaS Package
 
-![Integrated GitLab Install](gitlab-integrated-install.png)
+![Integrated GitLab Install](gitlab-integrated-install.png#only-light)
+![Integrated GitLab Install](gitlab-integrated-install-dark.png#only-dark)
 
-See [secure server with GitLab](../dtaas/secure-server-gitlab/install.md).
-Continue with [integration guide](integration.md).
+A path such as `/user1` is the URL route of that service, for example
+`https://intocps.org/user1`.
+The thick arrow is the forward-auth check: Traefik asks
+traefik-forward-auth to authorise each request before it routes it.
+
+See [secure server with GitLab](../dtaas/secure-server-gitlab/install.md),
+then continue with the [integration guide](integration.md).
 
 ## Option B: Services CLI GitLab Workflow
 
-![Services CLI GitLab Install](gitlab-independent-install.png)
+![Services CLI GitLab Install](gitlab-independent-install.png#only-light)
+![Services CLI GitLab Install](gitlab-independent-install-dark.png#only-dark)
 
-Use [services CLI](../services/cli.md) if GitLab is managed
-as part of the platform services project.
-Continue with [integration guide](integration.md).
+Server 1 runs DTaaS and server 2 runs GitLab. The routes and the thick
+arrow mean the same as in Option A.
+
+Use the [services CLI](../services/cli.md) if GitLab runs as one of the
+platform services, then continue with the
+[integration guide](integration.md).
 
 ## Notes
 
-- DTaaS client auth authority must match the actual GitLab endpoint.
-- For integrated package deployments, use the package-local `config/` files.
-- For services-cli deployments, use the generated services project files.
+- The DTaaS client auth authority must match the actual GitLab endpoint.
+- For integrated package deployments, use the package's own `config/` files.
+- For services CLI deployments, use the files of the generated services
+  project.
 
 ## Related
 

@@ -3,6 +3,15 @@ import { screen } from '@testing-library/react';
 import { useAuth } from 'react-oidc-context';
 import PrivateRoute from 'route/auth/PrivateRoute';
 import { renderWithRouter } from 'test/unit/unit.testUtil';
+import { useEffect } from 'react';
+import {
+  clearAccessToken,
+  clearUsername,
+  getAccessToken,
+  getUsername,
+} from '@into-cps-association/dt-automation';
+import { useDispatch } from 'react-redux';
+import { setUserName } from 'store/auth.slice';
 
 jest.mock('routes', () => {
   const MockSignin = () => <div>Signin</div>;
@@ -60,11 +69,17 @@ const setupTest = (authState: AuthState) => {
 };
 
 describe('PrivateRoute', () => {
+  const dispatch = jest.fn();
+
   beforeEach(() => {
     sessionStorage.clear();
+    clearAccessToken();
+    clearUsername();
+    dispatch.mockClear();
+    (useDispatch as unknown as jest.Mock).mockReturnValue(dispatch);
   });
 
-  test('renders loading and redirects correctly when authenticated/not authentic', async () => {
+  test('Renders loading and redirects correctly when authenticated/not authentic', async () => {
     setupTest({
       isLoading: false,
       error: null,
@@ -91,7 +106,7 @@ describe('PrivateRoute', () => {
     expect(screen.getByText(/ExecutionHistoryLoader/i)).toBeInTheDocument();
   });
 
-  test('renders error', () => {
+  test('Renders error', () => {
     setupTest({
       isLoading: false,
       error: new Error('Test error'),
@@ -102,13 +117,29 @@ describe('PrivateRoute', () => {
     expect(screen.getByText('Mock WaitNavigateAndReload')).toBeInTheDocument();
   });
 
-  test('stores access_token in sessionStorage when authenticated', () => {
+  test('Holds the access token in memory when authenticated', () => {
     setupTest({ isLoading: false, error: null, isAuthenticated: true });
 
-    expect(sessionStorage.getItem('access_token')).toBe('example_token');
+    expect(getAccessToken()).toBe('example_token');
   });
 
-  test('throws when authenticated but user is null', () => {
+  test('Does not write the access token to sessionStorage', () => {
+    // This client used to write a second copy there, where script on this
+    // origin can read it, including script inside the same-origin iframes the
+    // library and digital twin pages embed without a sandbox attribute. The
+    // OIDC user store keeps its own copy, which this change does not touch.
+    setupTest({ isLoading: false, error: null, isAuthenticated: true });
+
+    const stored = Object.keys(sessionStorage).map((k) =>
+      sessionStorage.getItem(k),
+    );
+    expect(stored).not.toContain('example_token');
+  });
+
+  test('Sends the person to sign in when a session has no user', () => {
+    // react-oidc-context should not report this state. If it ever does, the
+    // route has no token for its children, so it redirects instead of throwing
+    // during render and taking the page down with it.
     (useAuth as jest.Mock).mockReturnValue({
       isLoading: false,
       error: null,
@@ -116,13 +147,60 @@ describe('PrivateRoute', () => {
       user: null,
     });
 
-    expect(() =>
-      renderWithRouter(
-        <PrivateRoute>
-          <TestComponent />
-        </PrivateRoute>,
-        { route: '/private' },
-      ),
-    ).toThrow('Access token was not available...');
+    renderWithRouter(
+      <PrivateRoute>
+        <TestComponent />
+      </PrivateRoute>,
+      { route: '/private' },
+    );
+
+    expect(screen.queryByText('Test Component')).not.toBeInTheDocument();
+    expect(getAccessToken()).toBe('');
+    expect(getUsername()).toBe('');
+  });
+
+  test('Gives the package the user name before a child fetches on mount', () => {
+    // After a reload the name is no longer in memory. A child's mount effect
+    // runs before the route's own effects, so the route must hand the name to
+    // the package during render, as it does the token.
+    let usernameSeenByChild: string | undefined;
+    const FetchingChild = () => {
+      useEffect(() => {
+        usernameSeenByChild = getUsername();
+      }, []);
+      return <div>Fetching Child</div>;
+    };
+    (useAuth as jest.Mock).mockReturnValue({
+      isLoading: false,
+      error: null,
+      isAuthenticated: true,
+      user: {
+        profile: { profile: '/example/username' },
+        access_token: 'example_token',
+      },
+    });
+
+    renderWithRouter(
+      <PrivateRoute>
+        <FetchingChild />
+      </PrivateRoute>,
+      { route: '/private' },
+    );
+
+    expect(usernameSeenByChild).toBe('username');
+  });
+
+  test('Records the user name for whichever private page opens first', () => {
+    // Every workspace address carries the name. A page opened directly, and
+    // not after Library, used to find it empty and ask for //lab.
+    setupTest({ isLoading: false, error: null, isAuthenticated: true });
+
+    expect(dispatch).toHaveBeenCalledWith(setUserName('username'));
+  });
+
+  test('Records no user name before the session is established', () => {
+    setupTest({ isLoading: true, error: null, isAuthenticated: false });
+
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });
