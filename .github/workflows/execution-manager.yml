@@ -4,12 +4,12 @@ name: Execution manager
   push:
     paths:
       - 'servers/execution/manager/**'
-      - 'developer/execution-manager.dockerfile'
+      - 'developer/check/execution-manager.dockerfile'
       - '.github/workflows/execution-manager.yml'
   pull_request:
     paths:
       - 'servers/execution/manager/**'
-      - 'developer/execution-manager.dockerfile'
+      - 'developer/check/execution-manager.dockerfile'
       - '.github/workflows/execution-manager.yml'
   workflow_dispatch:
 
@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  NODE_VERSION: 24
+  NODE_VERSION: 26
   EXECUTION_MANAGER_PORT: 4004
   EXECUTION_MANAGER_TLS: false
 
@@ -101,7 +101,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           docker build \
-            --file developer/execution-manager.dockerfile \
+            --file developer/check/execution-manager.dockerfile \
             --tag dtaas-execution-manager:ci \
             .
           container_id=$(docker run --detach --rm \

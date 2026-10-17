@@ -19,10 +19,10 @@ yarn start
 Settings come from three places, each overriding the one before it: built-in
 defaults, a YAML configuration file, and environment variables.
 
-Copy `manager.yaml.sample` to `manager.yaml` and edit it. The file is located
-by the `-c` (or `--config`) option, then `EXECUTION_MANAGER_CONFIG_PATH`, and
-otherwise `manager.yaml` in the working directory. Without a file, the defaults
-apply.
+Copy `config/manager.yaml.sample` to `manager.yaml` and edit it. The file is
+located by the `-c` (or `--config`) option, then
+`EXECUTION_MANAGER_CONFIG_PATH`, and otherwise `manager.yaml` in the working
+directory. Without a file, the defaults apply.
 
 ```bash
 yarn start -- -c ./manager.yaml
@@ -55,15 +55,4 @@ self-signed RSA-4096/SHA-256 certificate with OpenSSL and stores both files in
 the certificate directory. Keep TLS disabled when a reverse proxy terminates
 HTTPS for the service.
 
-## `dt-automation` integration status
-
-Version `0.1.0` cannot yet be used as a server-side GitLab adapter through its
-published API. Its Node-oriented `createGitlabInstance` factory exists in the
-source tree but is not exported from the package root. The exported convenience
-initializers read browser `sessionStorage`, and package configuration is supplied
-through process-global store registrations.
-
-The Execution Manager therefore does not depend on `dt-automation` yet. The
-package needs an explicit server-safe public API before it can be integrated
-without importing private source paths or emulating browser state.
 
