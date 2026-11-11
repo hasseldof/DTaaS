@@ -144,6 +144,12 @@ The package root exports the following selectors:
 Register `setMeasurementStore` and `setMeasurementDB` when using measurement
 features.
 
+Results stay in memory unless a storage is registered with
+`setMeasurementResultsStorage`. A browser application can pass
+`sessionStorage` to keep the results across a page reload. Register the
+storage before the results are first set, because saved results are restored
+only while there are none.
+
 The measurement API provides operations for starting and stopping measurements,
 managing active pipelines, storing results, and downloading measurement data.
 
