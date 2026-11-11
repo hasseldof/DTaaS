@@ -1,6 +1,6 @@
 import {
-  downloadResultsJson,
-  downloadTaskResultJson,
+  buildResultsExport,
+  buildTaskResultExport,
 } from 'src/gitlab/measure/measurement.utils';
 import {
   createMockTask,
@@ -8,146 +8,93 @@ import {
   createMockExecution,
   DEFAULT_CONFIG,
 } from 'test/unit/model/backend/gitlab/measure/measurement.testUtil';
-import { setupMockDownload } from 'test/unit/model/backend/gitlab/measure/measurement.envSetup';
 
-function captureJsonDownload<T>(action: () => void): T {
-  let capturedJson = '';
-  const OriginalBlob = globalThis.Blob;
-  globalThis.Blob = function MockBlob(parts: BlobPart[]) {
-    capturedJson = parts[0] as string;
-  } as unknown as typeof Blob;
-  action();
-  globalThis.Blob = OriginalBlob;
-  return JSON.parse(capturedJson) as T;
+const SERIALIZED_TASK = {
+  'Task Name': 'Test Task',
+  Description: 'Test description',
+  config: {},
+  trials: [],
+  'Time Start': '2026-01-01T10:00:00.000Z',
+  'Time End': '2026-01-01T10:00:30.000Z',
+  'Average Time (s)': 30,
+  Status: 'SUCCESS',
+};
+
+function parseContent<T>({ content }: { content: string }): T {
+  return JSON.parse(content) as T;
 }
 
-describe('measurement download', () => {
-  describe('downloadResultsJson', () => {
-    let downloadMocks: ReturnType<typeof setupMockDownload>;
+describe('measurement export', () => {
+  beforeEach(() => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-10-18T17:41:04.567Z'));
+  });
 
-    beforeEach(() => {
-      downloadMocks = setupMockDownload();
+  afterEach(() => jest.useRealTimers());
+
+  describe('buildResultsExport', () => {
+    it('names the JSON file after the current time', () => {
+      expect(buildResultsExport([createMockTask()])).toMatchObject({
+        fileName: 'measurement-2026-10-18T17-41-04.json',
+        mimeType: 'application/json',
+      });
     });
 
-    afterEach(() => {
-      downloadMocks.restore();
-    });
+    it('writes the total time and the tasks as indented JSON', () => {
+      const { content } = buildResultsExport([createMockTask()]);
 
-    it('should create a blob with correct JSON data', () => {
-      const results = [createMockTask({ 'Task Name': 'Test Task' })];
-
-      downloadResultsJson(results);
-
-      expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
-    });
-
-    it('should create an anchor element and trigger click', () => {
-      const results = [createMockTask()];
-
-      downloadResultsJson(results);
-
-      expect(document.createElement).toHaveBeenCalledWith('a');
-      expect(downloadMocks.mockClick).toHaveBeenCalled();
-    });
-
-    it('should revoke the object URL after download', () => {
-      const results = [createMockTask()];
-
-      downloadResultsJson(results);
-
-      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-url');
-    });
-
-    it('should set correct download filename with timestamp', () => {
-      const results = [createMockTask()];
-
-      downloadResultsJson(results);
-
-      expect(downloadMocks.mockLink.download).toMatch(
-        /^measurement-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.json$/,
+      expect(content).toBe(
+        JSON.stringify(
+          { totalTimeSeconds: 30, tasks: [SERIALIZED_TASK] },
+          null,
+          2,
+        ),
       );
     });
   });
 
-  describe('downloadTaskResultJson', () => {
-    let downloadMocks: ReturnType<typeof setupMockDownload>;
-
-    beforeEach(() => {
-      downloadMocks = setupMockDownload();
-    });
-
-    afterEach(() => {
-      downloadMocks.restore();
-    });
-
-    it('should create a blob with correct task JSON data', () => {
-      const task = createMockTask({ 'Task Name': 'Single Task' });
-
-      downloadTaskResultJson(task);
-
-      expect(URL.createObjectURL).toHaveBeenCalledWith(expect.any(Blob));
-    });
-
-    it('should create an anchor element and trigger click', () => {
-      const task = createMockTask();
-
-      downloadTaskResultJson(task);
-
-      expect(document.createElement).toHaveBeenCalledWith('a');
-      expect(downloadMocks.mockClick).toHaveBeenCalled();
-    });
-
-    it('should revoke the object URL after download', () => {
-      const task = createMockTask();
-
-      downloadTaskResultJson(task);
-
-      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-url');
-    });
-
-    it('should set correct download filename with task name slug', () => {
+  describe('buildTaskResultExport', () => {
+    it('names the JSON file after the task and the current time', () => {
       const task = createMockTask({ 'Task Name': 'My Test Task' });
 
-      downloadTaskResultJson(task);
-
-      expect(downloadMocks.mockLink.download).toMatch(
-        /^measurement-my-test-task-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.json$/,
-      );
+      expect(buildTaskResultExport(task)).toMatchObject({
+        fileName: 'measurement-my-test-task-2026-10-18T17-41-04.json',
+        mimeType: 'application/json',
+      });
     });
 
-    it('should handle task names with multiple spaces', () => {
+    it('handles task names with multiple spaces', () => {
       const task = createMockTask({
         'Task Name': 'Task   With   Multiple   Spaces',
       });
 
-      downloadTaskResultJson(task);
+      expect(buildTaskResultExport(task).fileName).toBe(
+        'measurement-task-with-multiple-spaces-2026-10-18T17-41-04.json',
+      );
+    });
 
-      expect(downloadMocks.mockLink.download).toMatch(
-        /^measurement-task-with-multiple-spaces-/,
+    it('writes the task duration and the task as indented JSON', () => {
+      const { content } = buildTaskResultExport(createMockTask());
+
+      expect(content).toBe(
+        JSON.stringify(
+          { totalTimeSeconds: 30, task: SERIALIZED_TASK },
+          null,
+          2,
+        ),
       );
     });
   });
 
   describe('JSON structure', () => {
-    let downloadMocks: ReturnType<typeof setupMockDownload>;
-
-    beforeEach(() => {
-      downloadMocks = setupMockDownload();
-    });
-
-    afterEach(() => {
-      downloadMocks.restore();
-    });
-
     it('includes config from first execution at task level', () => {
       const trial = createMockTrial({
         Execution: [createMockExecution({ executionIndex: 0 })],
       });
       const task = createMockTask({ Trials: [trial] });
 
-      const result = captureJsonDownload<{
+      const result = parseContent<{
         task: { config: object };
-      }>(() => downloadTaskResultJson(task));
+      }>(buildTaskResultExport(task));
 
       const { 'Runner tag': _runnerTag, ...configWithoutRunner } =
         DEFAULT_CONFIG;
@@ -162,9 +109,9 @@ describe('measurement download', () => {
       });
       const task = createMockTask({ Trials: [trial] });
 
-      const result = captureJsonDownload<{
+      const result = parseContent<{
         task: { trials: Array<{ executions: object[] }> };
-      }>(() => downloadTaskResultJson(task));
+      }>(buildTaskResultExport(task));
 
       expect(result.task.trials[0].executions[0]).toEqual({
         dtName: 'hello-world',
@@ -177,9 +124,9 @@ describe('measurement download', () => {
     it('produces empty config when task has no trials', () => {
       const task = createMockTask({ Trials: [] });
 
-      const result = captureJsonDownload<{
+      const result = parseContent<{
         task: { config: object; trials: object[] };
-      }>(() => downloadTaskResultJson(task));
+      }>(buildTaskResultExport(task));
 
       expect(result.task.config).toEqual({});
       expect(result.task.trials).toEqual([]);
@@ -192,9 +139,9 @@ describe('measurement download', () => {
       });
       const task = createMockTask({ Trials: [trial] });
 
-      const result = captureJsonDownload<{
+      const result = parseContent<{
         task: { trials: Array<{ Error?: object }> };
-      }>(() => downloadTaskResultJson(task));
+      }>(buildTaskResultExport(task));
 
       expect(result.task.trials[0]).not.toHaveProperty('Error');
     });
@@ -209,23 +156,23 @@ describe('measurement download', () => {
       });
       const task = createMockTask({ Trials: [trial] });
 
-      const result = captureJsonDownload<{
+      const result = parseContent<{
         task: { trials: Array<{ Error?: { message: string } }> };
-      }>(() => downloadTaskResultJson(task));
+      }>(buildTaskResultExport(task));
 
       expect(result.task.trials[0].Error).toBeDefined();
       expect(result.task.trials[0].Error!.message).toBe('Pipeline failed');
     });
 
-    it('applies the same structure to every task in downloadResultsJson', () => {
+    it('applies the same structure to every task in buildResultsExport', () => {
       const trial = createMockTrial({
         Execution: [createMockExecution({ executionIndex: 0 })],
       });
       const task = createMockTask({ Trials: [trial] });
 
-      const result = captureJsonDownload<{
+      const result = parseContent<{
         tasks: Array<{ config: object; trials: object[] }>;
-      }>(() => downloadResultsJson([task]));
+      }>(buildResultsExport([task]));
 
       const { 'Runner tag': _runnerTag, ...configWithoutRunner } =
         DEFAULT_CONFIG;
