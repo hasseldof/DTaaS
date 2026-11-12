@@ -1,9 +1,10 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Measurement from 'route/measurement/Measurement';
 import { measurementState } from '@into-cps-association/dt-automation';
 import {
   MOCK_MEASUREMENT_STATE,
+  createResultTask,
   setupMeasurementComponentTest,
 } from './measurement.testSetup';
 
@@ -15,7 +16,13 @@ jest.mock('route/measurement/MeasurementControls', () => ({
 
 jest.mock('route/measurement/MeasurementTable', () => ({
   __esModule: true,
-  default: () => <div data-testid="measurement-table" />,
+  default: ({ results }: { results: { 'Task Name': string }[] }) => (
+    <div data-testid="measurement-table">
+      {results.map((task) => (
+        <span key={task['Task Name']}>{task['Task Name']}</span>
+      ))}
+    </div>
+  ),
 }));
 
 const mockMergeExecutionStatus = jest.fn(
@@ -50,7 +57,6 @@ jest.mock('@into-cps-association/dt-automation', () => {
         completedResults,
         defaultConfig,
       ),
-    downloadTaskResultJson: jest.fn(),
     measurementState: { ...setup.MOCK_MEASUREMENT_STATE },
     attachSetters: jest.fn(),
     detachSetters: jest.fn(),
@@ -80,5 +86,20 @@ describe('Measurement initial executions', () => {
       [{ dtName: 'hello-world', pipelineId: 11 }],
       { DTName: 'default-dt' },
     );
+  });
+
+  it('opens the interrupted-session dialog with the restored results', () => {
+    Object.assign(measurementState, {
+      isRunning: false,
+      results: [createResultTask('Restored Task', 'STOPPED')],
+      restoredAfterRefresh: true,
+    });
+
+    render(<Measurement />);
+
+    expect(
+      screen.getByText('Previous Session Interrupted'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Restored Task')).toBeInTheDocument();
   });
 });

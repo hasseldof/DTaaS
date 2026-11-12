@@ -8,6 +8,7 @@ import {
   setExecutionHistoryDB,
   setPipelineExecutionDB,
   setMeasurementDB,
+  setMeasurementResultsStorage,
   updateAuthority,
 } from '@into-cps-association/dt-automation';
 import indexedDBService from 'database/executionHistoryDB';
@@ -79,6 +80,7 @@ setMeasurementStore({
 setExecutionHistoryDB(indexedDBService);
 setPipelineExecutionDB(indexedDBService);
 setMeasurementDB(measurementDBService);
+setMeasurementResultsStorage(sessionStorage);
 setLoggerStore({
   showSnackbar: (message, severity) =>
     store.dispatch(showSnackbar({ message, severity })),

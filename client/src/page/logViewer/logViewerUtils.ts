@@ -1,5 +1,6 @@
 import { LogEvent } from 'util/logger/logEvent';
 import { collectLogContextText } from 'util/logger/contextUtils';
+import downloadFile from 'util/downloadFile';
 
 function timestampValue(event: LogEvent): number {
   const parsed = Date.parse(event.timestamp);
@@ -106,18 +107,9 @@ export function getDownloadLabel(filtered: boolean): string {
 }
 
 export function downloadJsonLines(entries: LogEvent[]): void {
-  const jsonl = toJsonLines(entries);
-  const blob = new Blob([jsonl], { type: 'application/x-ndjson' });
-  let url = '';
-  try {
-    url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `dtaas-workflow-log-${new Date().toISOString().slice(0, 10)}.jsonl`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  } finally {
-    if (url) URL.revokeObjectURL(url);
-  }
+  downloadFile({
+    fileName: `dtaas-workflow-log-${new Date().toISOString().slice(0, 10)}.jsonl`,
+    content: toJsonLines(entries),
+    mimeType: 'application/x-ndjson',
+  });
 }

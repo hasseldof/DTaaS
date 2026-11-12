@@ -1,14 +1,19 @@
 import {
   MAX_RENDERED_LOG_ENTRIES,
+  downloadJsonLines,
   getRenderCapNote,
   matchesFilter,
   sortLogsNewestFirst,
+  toJsonLines,
 } from 'page/logViewer/logViewerUtils';
+import downloadFile from 'util/downloadFile';
 import {
   MAX_LOG_CONTEXT_DEPTH,
   MAX_LOG_CONTEXT_ENTRIES,
 } from 'util/logger/contextUtils';
 import { LogContext, LogEvent } from 'util/logger/logEvent';
+
+jest.mock('util/downloadFile');
 
 function buildEvent(context: LogEvent['context']): LogEvent {
   return {
@@ -90,5 +95,22 @@ describe('getRenderCapNote', () => {
 
     expect(note).toContain(`newest ${MAX_RENDERED_LOG_ENTRIES}`);
     expect(note).toContain(`${MAX_RENDERED_LOG_ENTRIES + 1} entries`);
+  });
+});
+
+describe('downloadJsonLines', () => {
+  afterEach(() => jest.useRealTimers());
+
+  it('saves the entries as a dated JSON Lines file', () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-24T20:00:00.000Z'));
+    const entries = [buildEvent({})];
+
+    downloadJsonLines(entries);
+
+    expect(downloadFile).toHaveBeenCalledWith({
+      fileName: 'dtaas-workflow-log-2026-03-24.jsonl',
+      content: toJsonLines(entries),
+      mimeType: 'application/x-ndjson',
+    });
   });
 });

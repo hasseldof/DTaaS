@@ -19,7 +19,7 @@ import {
   handleUnload,
   purgeMeasurementData,
   getMeasurementStatus,
-  downloadTaskResultJson,
+  buildTaskResultExport,
 } from '@into-cps-association/dt-automation';
 import { toggleTaskEnabled } from 'store/settings.slice';
 import MeasurementControls, {
@@ -33,6 +33,7 @@ import {
   initInterruptedDialogOpen,
   usePollingEffect,
 } from 'route/measurement/measurementPageState';
+import downloadFile from 'util/downloadFile';
 
 function Measurement() {
   const dispatch = useDispatch();
@@ -176,7 +177,7 @@ function Measurement() {
             results={results}
             currentTaskIndex={currentTaskIndex}
             currentExecutions={currentExecutions}
-            onDownloadTask={downloadTaskResultJson}
+            onDownloadTask={(task) => downloadFile(buildTaskResultExport(task))}
             primaryRunnerTag={effectivePrimaryTag}
             secondaryRunnerTag={effectiveSecondaryTag}
             primaryDTName={primaryDTName}

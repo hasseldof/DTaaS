@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import Measurement from 'route/measurement/Measurement';
+import downloadFile from 'util/downloadFile';
 import { setupMeasurementComponentTest } from './measurement.testSetup';
 
 jest.mock('react-redux', () => ({
@@ -120,7 +121,6 @@ jest.mock('route/measurement/MeasurementControls', () => ({
 const mockStartMeasurement = jest.fn().mockResolvedValue(undefined);
 const mockRestartMeasurement = jest.fn().mockResolvedValue(undefined);
 const mockStopAllPipelines = jest.fn().mockResolvedValue(undefined);
-const mockDownloadTaskResultJson = jest.fn();
 const mockPurgeMeasurementData = jest.fn().mockResolvedValue(undefined);
 
 jest.mock('@into-cps-association/dt-automation', () => {
@@ -143,8 +143,6 @@ jest.mock('@into-cps-association/dt-automation', () => {
     })),
     mergeExecutionStatus: jest.fn(() => []),
     areAllMeasurementsComplete: jest.fn(() => false),
-    downloadTaskResultJson: (...args: unknown[]) =>
-      mockDownloadTaskResultJson(...args),
     measurementState: { ...setup.MOCK_MEASUREMENT_STATE },
     DEFAULT_MEASUREMENT: actual.DEFAULT_MEASUREMENT,
     attachSetters: jest.fn(),
@@ -152,6 +150,8 @@ jest.mock('@into-cps-association/dt-automation', () => {
     getTasks: () => setup.MOCK_TASKS,
   };
 });
+
+jest.mock('util/downloadFile');
 
 let mockDispatch: jest.Mock;
 
@@ -240,12 +240,13 @@ describe('Measurement - dispatch and interactions', () => {
     expect(mockPurgeMeasurementData).toHaveBeenCalled();
   });
 
-  it('calls downloadTaskResultJson when download is triggered', async () => {
+  it('saves the task results with downloadFile when download is triggered', async () => {
     renderMeasurement();
     await act(async () => {
       fireEvent.click(screen.getAllByText('Download')[0]);
     });
-    expect(mockDownloadTaskResultJson).toHaveBeenCalled();
+    const taskExport = jest.mocked(downloadFile).mock.calls[0]?.[0];
+    expect(taskExport?.fileName).toMatch(/^measurement-task-1-.+\.json$/);
   });
 
   it('dispatches start snackbar when Start is clicked', async () => {

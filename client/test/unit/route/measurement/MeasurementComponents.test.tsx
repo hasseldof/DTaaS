@@ -1,9 +1,16 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { RunnerTagBadge } from 'route/measurement/MeasurementComponents';
-import { CompletionSummary } from 'route/measurement/MeasurementControls';
+import MeasurementControls, {
+  CompletionSummary,
+} from 'route/measurement/MeasurementControls';
 import { TaskControls } from 'route/measurement/MeasurementTable';
-import { getRunnerTags } from '@into-cps-association/dt-automation';
+import {
+  TimedTask,
+  buildResultsExport,
+  getRunnerTags,
+} from '@into-cps-association/dt-automation';
+import downloadFile from 'util/downloadFile';
 import {
   createMockTrial,
   createMockTaskPending as createMockTask,
@@ -14,9 +21,10 @@ jest.mock('@into-cps-association/dt-automation', () => {
   return {
     ...actual,
     getTotalTime: jest.fn(),
-    downloadResultsJson: jest.fn(),
   };
 });
+
+jest.mock('util/downloadFile');
 
 const mockUtils = jest.requireMock('@into-cps-association/dt-automation');
 const mockGetTotalTime = mockUtils.getTotalTime as jest.Mock;
@@ -173,5 +181,39 @@ describe('MeasurementComponents', () => {
     expect(
       screen.getByText('Measurement data generation complete'),
     ).toBeInTheDocument();
+  });
+});
+
+function renderControls(results: TimedTask[]) {
+  return render(
+    <MeasurementControls
+      isRunning={false}
+      hasStarted={true}
+      iterations={1}
+      completedTasks={1}
+      completedTrials={1}
+      totalTasks={1}
+      results={results}
+      onStart={jest.fn()}
+      onRestart={jest.fn()}
+      onStop={jest.fn()}
+      onPurge={jest.fn()}
+    />,
+  );
+}
+
+describe('MeasurementControls export', () => {
+  afterEach(() => jest.useRealTimers());
+
+  it('saves all results with downloadFile', () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-10-18T17:41:04.567Z'));
+    const results = [createMockTask({ Trials: [createMockTrial()] })];
+    renderControls(results);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Export' }));
+
+    const resultsExport = buildResultsExport(results);
+    expect(resultsExport.fileName).toBe('measurement-2026-10-18T17-41-04.json');
+    expect(downloadFile).toHaveBeenCalledWith(resultsExport);
   });
 });

@@ -13,9 +13,10 @@ import {
 import {
   TimedTask,
   getTotalTime,
-  downloadResultsJson,
+  buildResultsExport,
   isTaskComplete,
 } from '@into-cps-association/dt-automation';
+import downloadFile from 'util/downloadFile';
 import { logDismiss } from 'util/logger/logger';
 import type { LogContext } from 'util/logger/logEvent';
 
@@ -186,7 +187,7 @@ export default function MeasurementControls({
           <Button
             variant="outlined"
             color="primary"
-            onClick={() => downloadResultsJson(results)}
+            onClick={() => downloadFile(buildResultsExport(results))}
             disabled={!hasAnyResults}
             size="small"
             data-logger-element="button"

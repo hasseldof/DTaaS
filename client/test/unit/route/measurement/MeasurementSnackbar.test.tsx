@@ -100,7 +100,6 @@ jest.mock('@into-cps-association/dt-automation', () => {
     })),
     mergeExecutionStatus: jest.fn(() => []),
     areAllMeasurementsComplete: actual.areAllMeasurementsComplete,
-    downloadTaskResultJson: jest.fn(),
     measurementState: { ...setup.MOCK_MEASUREMENT_STATE },
     DEFAULT_MEASUREMENT: actual.DEFAULT_MEASUREMENT,
     attachSetters: jest.fn(),
